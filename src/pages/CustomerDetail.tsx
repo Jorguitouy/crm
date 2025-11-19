@@ -8,7 +8,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Mail, Phone, Home, PlusCircle } from 'lucide-react';
 import { ServiceOrdersTable } from '@/components/ServiceOrdersTable';
-import { ServiceOrderForm } from '@/components/ServiceOrderForm';
+import { EditServiceOrderForm } from '@/components/EditServiceOrderForm';
+import { SmartServiceOrderForm } from '@/components/SmartServiceOrderForm';
 import { CallLogForm } from '@/components/CallLogForm';
 import { showError, showSuccess } from '@/utils/toast';
 import { format } from 'date-fns';
@@ -41,7 +42,8 @@ const fetchCallLogs = async (customerId: string) => {
 const CustomerDetail = () => {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
-  const [isServiceFormOpen, setIsServiceFormOpen] = useState(false);
+  const [isNewOrderFormOpen, setIsNewOrderFormOpen] = useState(false);
+  const [isEditOrderFormOpen, setIsEditOrderFormOpen] = useState(false);
   const [isCallLogFormOpen, setIsCallLogFormOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
@@ -70,7 +72,7 @@ const CustomerDetail = () => {
 
   const handleEditServiceClick = (order: any) => {
     setSelectedOrder(order);
-    setIsServiceFormOpen(true);
+    setIsEditOrderFormOpen(true);
   };
 
   const handleDeleteServiceClick = async (orderId: string) => {
@@ -86,7 +88,6 @@ const CustomerDetail = () => {
     }
   };
 
-  // Error 5: Función añadida
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {
         const { error } = await supabase.from('service_orders').update({ status: newStatus }).eq('id', orderId);
@@ -102,6 +103,7 @@ const CustomerDetail = () => {
   const handleServiceSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ['customerServiceOrders', id] });
     queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
+    queryClient.invalidateQueries({ queryKey: ['customers'] });
   };
 
   const handleCallLogSuccess = () => {
@@ -118,9 +120,12 @@ const CustomerDetail = () => {
 
   return (
     <Layout>
-      <div className="mb-4">
+      <div className="flex items-center justify-between mb-4">
         <Button variant="outline" asChild>
           <Link to="/customers"><ArrowLeft className="mr-2 h-4 w-4" /> Volver a Clientes</Link>
+        </Button>
+        <Button onClick={() => setIsNewOrderFormOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" /> Nueva Orden para este Cliente
         </Button>
       </div>
 
@@ -174,7 +179,6 @@ const CustomerDetail = () => {
               {isLoadingOrders ? <Skeleton className="h-48 w-full" /> : isErrorOrders ? (
                 <div className="text-red-500">Error al cargar el historial.</div>
               ) : serviceOrders && serviceOrders.length > 0 ? (
-                // Error 5: Propiedad añadida
                 <ServiceOrdersTable serviceOrders={serviceOrders} onEdit={handleEditServiceClick} onDelete={handleDeleteServiceClick} onStatusChange={handleStatusChange} />
               ) : (
                 <div className="text-center text-muted-foreground py-8">No hay órdenes de servicio.</div>
@@ -184,8 +188,11 @@ const CustomerDetail = () => {
         </div>
       </div>
 
-      {!isLoadingAllCustomers && allCustomers && (
-        <ServiceOrderForm isOpen={isServiceFormOpen} onOpenChange={setIsServiceFormOpen} onSuccess={handleServiceSuccess} customers={allCustomers} serviceOrder={selectedOrder} />
+      {allCustomers && (
+        <SmartServiceOrderForm isOpen={isNewOrderFormOpen} onOpenChange={setIsNewOrderFormOpen} onSuccess={handleServiceSuccess} customers={allCustomers} preselectedCustomerId={customer.id} />
+      )}
+      {selectedOrder && (
+        <EditServiceOrderForm isOpen={isEditOrderFormOpen} onOpenChange={setIsEditOrderFormOpen} onSuccess={handleServiceSuccess} serviceOrder={selectedOrder} />
       )}
       <CallLogForm isOpen={isCallLogFormOpen} onOpenChange={setIsCallLogFormOpen} onSuccess={handleCallLogSuccess} customerId={customer.id} />
     </Layout>

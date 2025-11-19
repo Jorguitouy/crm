@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ServiceOrderForm } from '@/components/ServiceOrderForm';
 import { ServiceOrdersTable } from '@/components/ServiceOrdersTable';
 import { showError, showSuccess } from '@/utils/toast';
+import { SmartServiceOrderForm } from '@/components/SmartServiceOrderForm';
+import { EditServiceOrderForm } from '@/components/EditServiceOrderForm';
 
 const fetchServiceOrders = async (statusFilter: string) => {
   let query = supabase
@@ -31,7 +32,8 @@ const fetchCustomers = async () => {
 
 const Services = () => {
   const queryClient = useQueryClient();
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isNewOrderFormOpen, setIsNewOrderFormOpen] = useState(false);
+  const [isEditOrderFormOpen, setIsEditOrderFormOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState('Todos');
   const statuses = ['Todos', 'Pendiente', 'En Progreso', 'Completado', 'Cancelado'];
@@ -48,12 +50,12 @@ const Services = () => {
 
   const handleAddClick = () => {
     setSelectedOrder(null);
-    setIsFormOpen(true);
+    setIsNewOrderFormOpen(true);
   };
 
   const handleEditClick = (order: any) => {
     setSelectedOrder(order);
-    setIsFormOpen(true);
+    setIsEditOrderFormOpen(true);
   };
 
   const handleDeleteClick = async (orderId: string) => {
@@ -84,6 +86,7 @@ const Services = () => {
   const handleSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ['serviceOrders', statusFilter] });
     queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
+    queryClient.invalidateQueries({ queryKey: ['customers'] });
   };
 
   return (
@@ -93,7 +96,7 @@ const Services = () => {
         <Button onClick={handleAddClick} disabled={isLoadingCustomers}>Agregar Orden</Button>
       </div>
 
-      <div className="flex items-center gap-2 mt-4">
+      <div className="flex items-center gap-2 mt-4 overflow-x-auto pb-2">
         {statuses.map(status => (
             <Button key={status} variant={statusFilter === status ? 'default' : 'outline'} size="sm" onClick={() => setStatusFilter(status)}>
                 {status}
@@ -119,7 +122,8 @@ const Services = () => {
         )}
       </div>
 
-      {customers && <ServiceOrderForm isOpen={isFormOpen} onOpenChange={setIsFormOpen} onSuccess={handleSuccess} customers={customers} serviceOrder={selectedOrder} />}
+      {customers && <SmartServiceOrderForm isOpen={isNewOrderFormOpen} onOpenChange={setIsNewOrderFormOpen} onSuccess={handleSuccess} customers={customers} />}
+      {selectedOrder && <EditServiceOrderForm isOpen={isEditOrderFormOpen} onOpenChange={setIsEditOrderFormOpen} onSuccess={handleSuccess} serviceOrder={selectedOrder} />}
     </Layout>
   );
 };
