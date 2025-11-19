@@ -10,6 +10,7 @@ import { AuthProvider } from "./contexts/AuthProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Customers from "./pages/Customers";
 import Services from "./pages/Services";
+import Audiences from "./pages/Audiences";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/customers" element={<Customers />} />
               <Route path="/services" element={<Services />} />
+              <Route path="/audiences" element={<Audiences />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             </Route>
             <Route path="*" element={<NotFound />} />
