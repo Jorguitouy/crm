@@ -3,6 +3,7 @@ import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthProvider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ServiceOrdersTable } from '@/components/ServiceOrdersTable';
 import { showError, showSuccess } from '@/utils/toast';
@@ -10,8 +11,9 @@ import { SmartServiceOrderForm } from '@/components/SmartServiceOrderForm';
 import { EditServiceOrderForm } from '@/components/EditServiceOrderForm';
 import { CompleteOrderDialog } from '@/components/CompleteOrderDialog';
 
+// ... (fetchServiceOrders y fetchCustomers sin cambios)
 const fetchServiceOrders = async (statusFilter: string) => {
-  let query = supabase.from('service_orders').select('*, customers(first_name, last_name)').order('created_at', { ascending: false });
+  let query = supabase.from('service_orders').select('*, customers(*)').order('created_at', { ascending: false });
   if (statusFilter !== 'Todos') { query = query.eq('status', statusFilter); }
   const { data, error } = await query;
   if (error) throw new Error(error.message);
@@ -24,7 +26,15 @@ const fetchCustomers = async () => {
     return data;
 };
 
+const fetchUserProfile = async (userId: string) => {
+    if (!userId) return null;
+    const { data, error } = await supabase.from('user_profiles').select('*').eq('id', userId).single();
+    if (error && error.code !== 'PGRST116') throw new Error(error.message);
+    return data;
+};
+
 const Services = () => {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isNewOrderFormOpen, setIsNewOrderFormOpen] = useState(false);
   const [isEditOrderFormOpen, setIsEditOrderFormOpen] = useState(false);
@@ -43,6 +53,13 @@ const Services = () => {
     queryFn: fetchCustomers,
   });
 
+  const { data: userProfile, isLoading: isLoadingProfile } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: () => fetchUserProfile(user!.id),
+    enabled: !!user,
+  });
+
+  // ... (todos los handlers sin cambios)
   const handleAddClick = () => { setIsNewOrderFormOpen(true); };
   const handleEditClick = (order: any) => { setSelectedOrder(order); setIsEditOrderFormOpen(true); };
   const handleMarkCompleteClick = (order: any) => { setSelectedOrder(order); setIsCompleteDialogOpen(true); };
@@ -84,9 +101,9 @@ const Services = () => {
         {statuses.map(status => (<Button key={status} variant={statusFilter === status ? 'default' : 'outline'} size="sm" onClick={() => setStatusFilter(status)}>{status}</Button>))}
       </div>
       <div className="mt-4">
-        {isLoadingOrders ? <div className="space-y-2"><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /></div>
+        {isLoadingOrders || isLoadingProfile ? <div className="space-y-2"><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /></div>
          : isErrorOrders ? <div className="text-red-500">Error al cargar las órdenes.</div>
-         : serviceOrders && serviceOrders.length > 0 ? <ServiceOrdersTable serviceOrders={serviceOrders} onEdit={handleEditClick} onDelete={handleDeleteClick} onMarkComplete={handleMarkCompleteClick} />
+         : serviceOrders && serviceOrders.length > 0 ? <ServiceOrdersTable serviceOrders={serviceOrders} userProfile={userProfile} onEdit={handleEditClick} onDelete={handleDeleteClick} onMarkComplete={handleMarkCompleteClick} />
          : <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm mt-4 p-8">
             <div className="flex flex-col items-center gap-1 text-center">
               <h3 className="text-2xl font-bold tracking-tight">No hay órdenes con este estado</h3>

@@ -2,8 +2,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, CheckCircle } from "lucide-react";
+import { MoreHorizontal, CheckCircle, FileDown } from "lucide-react";
 import { format } from "date-fns";
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import { ServiceReportPDF } from './ServiceReportPDF';
 
 interface ServiceOrder {
   id: string;
@@ -11,17 +13,15 @@ interface ServiceOrder {
   status: string;
   service_date: string;
   cost: number;
-  customers: {
-    first_name: string;
-    last_name: string;
-  } | null;
+  customers: any;
 }
 
 interface ServiceOrdersTableProps {
   serviceOrders: ServiceOrder[];
+  userProfile: any;
   onEdit: (serviceOrder: ServiceOrder) => void;
   onDelete: (serviceOrderId: string) => void;
-  onMarkComplete: (serviceOrder: ServiceOrder) => void; // Prop actualizada
+  onMarkComplete: (serviceOrder: ServiceOrder) => void;
 }
 
 const getStatusVariant = (status: string) => {
@@ -33,7 +33,7 @@ const getStatusVariant = (status: string) => {
   }
 };
 
-export const ServiceOrdersTable = ({ serviceOrders, onEdit, onDelete, onMarkComplete }: ServiceOrdersTableProps) => {
+export const ServiceOrdersTable = ({ serviceOrders, userProfile, onEdit, onDelete, onMarkComplete }: ServiceOrdersTableProps) => {
   return (
     <div className="rounded-lg border shadow-sm">
       <Table>
@@ -74,6 +74,20 @@ export const ServiceOrdersTable = ({ serviceOrders, onEdit, onDelete, onMarkComp
                             <CheckCircle className="mr-2 h-4 w-4" />
                             Marcar como Completado
                         </DropdownMenuItem>
+                    )}
+                    {order.status === 'Completado' && (
+                      <PDFDownloadLink
+                        document={<ServiceReportPDF serviceOrder={order} userProfile={userProfile} />}
+                        fileName={`reporte-${order.customers?.first_name || 'cliente'}-${order.id.substring(0, 4)}.pdf`}
+                        style={{ textDecoration: 'none' }}
+                      >
+                        {({ loading }) => (
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            <FileDown className="mr-2 h-4 w-4" />
+                            {loading ? 'Generando...' : 'Descargar PDF'}
+                          </DropdownMenuItem>
+                        )}
+                      </PDFDownloadLink>
                     )}
                     <DropdownMenuItem onClick={() => onEdit(order)}>Editar</DropdownMenuItem>
                     <DropdownMenuSeparator />
