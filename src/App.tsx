@@ -12,7 +12,8 @@ import Customers from "./pages/Customers";
 import Services from "./pages/Services";
 import Audiences from "./pages/Audiences";
 import CustomerDetail from "./pages/CustomerDetail";
-import Settings from "./pages/Settings"; // Importamos la nueva página
+import Settings from "./pages/Settings";
+import LandingPage from "./pages/LandingPage"; // Importamos la nueva página
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
+            <Route path="/landing" element={<LandingPage />} /> {/* Nueva ruta pública */}
             <Route path="/login" element={<LoginPage />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<Index />} />
@@ -31,7 +33,7 @@ const App = () => (
               <Route path="/customers/:id" element={<CustomerDetail />} />
               <Route path="/services" element={<Services />} />
               <Route path="/audiences" element={<Audiences />} />
-              <Route path="/settings" element={<Settings />} /> {/* Nueva ruta */}
+              <Route path="/settings" element={<Settings />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             </Route>
             <Route path="*" element={<NotFound />} />
