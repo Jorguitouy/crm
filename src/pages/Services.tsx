@@ -8,11 +8,17 @@ import { ServiceOrderForm } from '@/components/ServiceOrderForm';
 import { ServiceOrdersTable } from '@/components/ServiceOrdersTable';
 import { showError, showSuccess } from '@/utils/toast';
 
-const fetchServiceOrders = async () => {
-  const { data, error } = await supabase
+const fetchServiceOrders = async (statusFilter: string) => {
+  let query = supabase
     .from('service_orders')
     .select('*, customers(first_name, last_name)')
     .order('created_at', { ascending: false });
+
+  if (statusFilter !== 'Todos') {
+    query = query.eq('status', statusFilter);
+  }
+
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return data;
 };
@@ -27,10 +33,12 @@ const Services = () => {
   const queryClient = useQueryClient();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [statusFilter, setStatusFilter] = useState('Todos');
+  const statuses = ['Todos', 'Pendiente', 'En Progreso', 'Completado', 'Cancelado'];
 
   const { data: serviceOrders, isLoading: isLoadingOrders, isError: isErrorOrders } = useQuery({
-    queryKey: ['serviceOrders'],
-    queryFn: fetchServiceOrders,
+    queryKey: ['serviceOrders', statusFilter],
+    queryFn: () => fetchServiceOrders(statusFilter),
   });
 
   const { data: customers, isLoading: isLoadingCustomers } = useQuery({
@@ -49,19 +57,33 @@ const Services = () => {
   };
 
   const handleDeleteClick = async (orderId: string) => {
-    if (!window.confirm("¿Estás seguro de que quieres eliminar esta orden?")) return;
+    if (!window.confirm("¿Estás seguro?")) return;
     try {
       const { error } = await supabase.from('service_orders').delete().eq('id', orderId);
       if (error) throw error;
-      showSuccess("Orden eliminada correctamente.");
-      queryClient.invalidateQueries({ queryKey: ['serviceOrders'] });
+      showSuccess("Orden eliminada.");
+      queryClient.invalidateQueries({ queryKey: ['serviceOrders', statusFilter] });
+      queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
     } catch (error) {
       showError((error as Error).message);
     }
   };
 
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
+    try {
+        const { error } = await supabase.from('service_orders').update({ status: newStatus }).eq('id', orderId);
+        if (error) throw error;
+        showSuccess(`Orden marcada como ${newStatus}.`);
+        queryClient.invalidateQueries({ queryKey: ['serviceOrders', statusFilter] });
+        queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
+    } catch (error) {
+        showError((error as Error).message);
+    }
+  };
+
   const handleSuccess = () => {
-    queryClient.invalidateQueries({ queryKey: ['serviceOrders'] });
+    queryClient.invalidateQueries({ queryKey: ['serviceOrders', statusFilter] });
+    queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
   };
 
   return (
@@ -71,36 +93,33 @@ const Services = () => {
         <Button onClick={handleAddClick} disabled={isLoadingCustomers}>Agregar Orden</Button>
       </div>
 
-      {isLoadingOrders ? (
-        <div className="space-y-2 mt-4">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-        </div>
-      ) : isErrorOrders ? (
-        <div className="text-red-500">Error al cargar las órdenes de servicio.</div>
-      ) : serviceOrders && serviceOrders.length > 0 ? (
-        <ServiceOrdersTable serviceOrders={serviceOrders} onEdit={handleEditClick} onDelete={handleDeleteClick} />
-      ) : (
-        <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm mt-4 p-8">
-          <div className="flex flex-col items-center gap-1 text-center">
-            <h3 className="text-2xl font-bold tracking-tight">
-              No hay órdenes de servicio
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Crea tu primera orden de servicio para empezar a gestionar tus trabajos.
-            </p>
-          </div>
-        </div>
-      )}
+      <div className="flex items-center gap-2 mt-4">
+        {statuses.map(status => (
+            <Button key={status} variant={statusFilter === status ? 'default' : 'outline'} size="sm" onClick={() => setStatusFilter(status)}>
+                {status}
+            </Button>
+        ))}
+      </div>
 
-      {customers && <ServiceOrderForm 
-        isOpen={isFormOpen} 
-        onOpenChange={setIsFormOpen} 
-        onSuccess={handleSuccess}
-        customers={customers}
-        serviceOrder={selectedOrder}
-      />}
+      <div className="mt-4">
+        {isLoadingOrders ? (
+          <div className="space-y-2"><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /></div>
+        ) : isErrorOrders ? (
+          <div className="text-red-500">Error al cargar las órdenes.</div>
+        ) : serviceOrders && serviceOrders.length > 0 ? (
+          <ServiceOrdersTable serviceOrders={serviceOrders} onEdit={handleEditClick} onDelete={handleDeleteClick} onStatusChange={handleStatusChange} />
+        ) : (
+          <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm mt-4 p-8">
+            <div className="flex flex-col items-center gap-1 text-center">
+              <h3 className="text-2xl font-bold tracking-tight">No hay órdenes con este estado</h3>
+              <p className="text-sm text-muted-foreground">Intenta con otro filtro o agrega una nueva orden de servicio.</p>
+              <Button className="mt-4" onClick={handleAddClick}>Agregar Orden</Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {customers && <ServiceOrderForm isOpen={isFormOpen} onOpenChange={setIsFormOpen} onSuccess={handleSuccess} customers={customers} serviceOrder={selectedOrder} />}
     </Layout>
   );
 };

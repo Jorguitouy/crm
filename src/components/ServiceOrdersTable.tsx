@@ -1,8 +1,8 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 
 interface ServiceOrder {
@@ -21,25 +21,21 @@ interface ServiceOrdersTableProps {
   serviceOrders: ServiceOrder[];
   onEdit: (serviceOrder: ServiceOrder) => void;
   onDelete: (serviceOrderId: string) => void;
+  onStatusChange: (serviceOrderId: string, newStatus: string) => void;
 }
 
 const getStatusVariant = (status: string) => {
   switch (status) {
-    case 'Completado':
-      return 'default';
-    case 'En Progreso':
-      return 'secondary';
-    case 'Cancelado':
-      return 'destructive';
-    case 'Pendiente':
-    default:
-      return 'outline';
+    case 'Completado': return 'default';
+    case 'En Progreso': return 'secondary';
+    case 'Cancelado': return 'destructive';
+    case 'Pendiente': default: return 'outline';
   }
 };
 
-export const ServiceOrdersTable = ({ serviceOrders, onEdit, onDelete }: ServiceOrdersTableProps) => {
+export const ServiceOrdersTable = ({ serviceOrders, onEdit, onDelete, onStatusChange }: ServiceOrdersTableProps) => {
   return (
-    <div className="rounded-lg border shadow-sm mt-4">
+    <div className="rounded-lg border shadow-sm">
       <Table>
         <TableHeader>
           <TableRow>
@@ -73,7 +69,14 @@ export const ServiceOrdersTable = ({ serviceOrders, onEdit, onDelete }: ServiceO
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                    {order.status !== 'Completado' && (
+                        <DropdownMenuItem onClick={() => onStatusChange(order.id, 'Completado')}>
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Marcar como Completado
+                        </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem onClick={() => onEdit(order)}>Editar</DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => onDelete(order.id)} className="text-red-600">Eliminar</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

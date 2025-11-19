@@ -14,7 +14,6 @@ import { showError, showSuccess } from '@/utils/toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-// ... (fetchCustomerDetails, fetchCustomerServiceOrders, fetchAllCustomers remain the same)
 const fetchCustomerDetails = async (id: string) => {
   const { data, error } = await supabase.from('customers').select('*').eq('id', id).single();
   if (error) throw new Error(error.message);
@@ -84,6 +83,19 @@ const CustomerDetail = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
     } catch (error) {
       showError((error as Error).message);
+    }
+  };
+
+  // Error 5: Función añadida
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
+    try {
+        const { error } = await supabase.from('service_orders').update({ status: newStatus }).eq('id', orderId);
+        if (error) throw error;
+        showSuccess(`Orden marcada como ${newStatus}.`);
+        queryClient.invalidateQueries({ queryKey: ['customerServiceOrders', id] });
+        queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
+    } catch (error) {
+        showError((error as Error).message);
     }
   };
 
@@ -162,7 +174,8 @@ const CustomerDetail = () => {
               {isLoadingOrders ? <Skeleton className="h-48 w-full" /> : isErrorOrders ? (
                 <div className="text-red-500">Error al cargar el historial.</div>
               ) : serviceOrders && serviceOrders.length > 0 ? (
-                <ServiceOrdersTable serviceOrders={serviceOrders} onEdit={handleEditServiceClick} onDelete={handleDeleteServiceClick} />
+                // Error 5: Propiedad añadida
+                <ServiceOrdersTable serviceOrders={serviceOrders} onEdit={handleEditServiceClick} onDelete={handleDeleteServiceClick} onStatusChange={handleStatusChange} />
               ) : (
                 <div className="text-center text-muted-foreground py-8">No hay órdenes de servicio.</div>
               )}
