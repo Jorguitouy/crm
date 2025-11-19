@@ -1,12 +1,13 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Home, Users, Wrench, LogOut, Target, Settings as SettingsIcon } from 'lucide-react';
+import { Menu, Home, Users, Wrench, LogOut, Target, Settings as SettingsIcon, Calendar as CalendarIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: Home },
+  { href: '/calendar', label: 'Calendario', icon: CalendarIcon },
   { href: '/customers', label: 'Clientes', icon: Users },
   { href: '/services', label: 'Servicios', icon: Wrench },
   { href: '/audiences', label: 'Audiencias', icon: Target },
