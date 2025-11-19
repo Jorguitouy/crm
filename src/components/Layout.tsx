@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Home, Users, Wrench, LogOut, Target } from 'lucide-react';
+import { Menu, Home, Users, Wrench, LogOut, Target, Settings as SettingsIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -48,6 +48,17 @@ const Sidebar = () => {
           </nav>
         </div>
         <div className="mt-auto p-4">
+            <NavLink
+                to="/settings"
+                className={({ isActive }) =>
+                  `flex items-center gap-3 rounded-lg px-3 py-2 mb-2 text-muted-foreground transition-all hover:text-primary ${
+                    isActive ? 'bg-muted text-primary' : ''
+                  }`
+                }
+              >
+                <SettingsIcon className="h-4 w-4" />
+                Ajustes
+            </NavLink>
           <Button size="sm" className="w-full" onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
             Cerrar Sesión
@@ -97,6 +108,17 @@ const MobileNav = () => {
                             {item.label}
                         </NavLink>
                     ))}
+                     <NavLink
+                        to="/settings"
+                        className={({ isActive }) =>
+                            `flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground ${
+                                isActive ? 'bg-muted text-foreground' : ''
+                            }`
+                        }
+                    >
+                        <SettingsIcon className="h-5 w-5" />
+                        Ajustes
+                    </NavLink>
                 </nav>
                 <div className="mt-auto">
                     <Button size="sm" className="w-full" onClick={handleLogout}>

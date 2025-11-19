@@ -11,7 +11,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Customers from "./pages/Customers";
 import Services from "./pages/Services";
 import Audiences from "./pages/Audiences";
-import CustomerDetail from "./pages/CustomerDetail"; // Importamos la nueva página
+import CustomerDetail from "./pages/CustomerDetail";
+import Settings from "./pages/Settings"; // Importamos la nueva página
 
 const queryClient = new QueryClient();
 
@@ -27,9 +28,10 @@ const App = () => (
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<Index />} />
               <Route path="/customers" element={<Customers />} />
-              <Route path="/customers/:id" element={<CustomerDetail />} /> {/* Nueva ruta */}
+              <Route path="/customers/:id" element={<CustomerDetail />} />
               <Route path="/services" element={<Services />} />
               <Route path="/audiences" element={<Audiences />} />
+              <Route path="/settings" element={<Settings />} /> {/* Nueva ruta */}
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             </Route>
             <Route path="*" element={<NotFound />} />

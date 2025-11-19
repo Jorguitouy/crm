@@ -6,11 +6,15 @@ import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Mail, Phone, Home } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, Home, PlusCircle } from 'lucide-react';
 import { ServiceOrdersTable } from '@/components/ServiceOrdersTable';
 import { ServiceOrderForm } from '@/components/ServiceOrderForm';
+import { CallLogForm } from '@/components/CallLogForm';
 import { showError, showSuccess } from '@/utils/toast';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
+// ... (fetchCustomerDetails, fetchCustomerServiceOrders, fetchAllCustomers remain the same)
 const fetchCustomerDetails = async (id: string) => {
   const { data, error } = await supabase.from('customers').select('*').eq('id', id).single();
   if (error) throw new Error(error.message);
@@ -29,10 +33,17 @@ const fetchAllCustomers = async () => {
     return data;
 };
 
+const fetchCallLogs = async (customerId: string) => {
+  const { data, error } = await supabase.from('call_logs').select('*').eq('customer_id', customerId).order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return data;
+};
+
 const CustomerDetail = () => {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isServiceFormOpen, setIsServiceFormOpen] = useState(false);
+  const [isCallLogFormOpen, setIsCallLogFormOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   const { data: customer, isLoading: isLoadingCustomer, isError: isErrorCustomer } = useQuery({
@@ -47,45 +58,46 @@ const CustomerDetail = () => {
     enabled: !!id,
   });
 
-  // Necesitamos la lista de todos los clientes para el formulario de edición
+  const { data: callLogs, isLoading: isLoadingCallLogs } = useQuery({
+    queryKey: ['callLogs', id],
+    queryFn: () => fetchCallLogs(id!),
+    enabled: !!id,
+  });
+
   const { data: allCustomers, isLoading: isLoadingAllCustomers } = useQuery({
     queryKey: ['customers'],
     queryFn: fetchAllCustomers,
   });
 
-  const handleEditClick = (order: any) => {
+  const handleEditServiceClick = (order: any) => {
     setSelectedOrder(order);
-    setIsFormOpen(true);
+    setIsServiceFormOpen(true);
   };
 
-  const handleDeleteClick = async (orderId: string) => {
+  const handleDeleteServiceClick = async (orderId: string) => {
     if (!window.confirm("¿Estás seguro de que quieres eliminar esta orden?")) return;
     try {
       const { error } = await supabase.from('service_orders').delete().eq('id', orderId);
       if (error) throw error;
       showSuccess("Orden eliminada correctamente.");
       queryClient.invalidateQueries({ queryKey: ['customerServiceOrders', id] });
-      queryClient.invalidateQueries({ queryKey: ['dashboardStats'] }); // Actualizar dashboard
+      queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
     } catch (error) {
       showError((error as Error).message);
     }
   };
 
-  const handleSuccess = () => {
+  const handleServiceSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ['customerServiceOrders', id] });
-    queryClient.invalidateQueries({ queryKey: ['dashboardStats'] }); // Actualizar dashboard
+    queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
+  };
+
+  const handleCallLogSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['callLogs', id] });
   };
 
   if (isLoadingCustomer) {
-    return (
-      <Layout>
-        <div className="space-y-4">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-40 w-full" />
-          <Skeleton className="h-64 w-full" />
-        </div>
-      </Layout>
-    );
+    return <Layout><Skeleton className="h-screen w-full" /></Layout>;
   }
 
   if (isErrorCustomer || !customer) {
@@ -96,46 +108,73 @@ const CustomerDetail = () => {
     <Layout>
       <div className="mb-4">
         <Button variant="outline" asChild>
-          <Link to="/customers">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Volver a Clientes
-          </Link>
+          <Link to="/customers"><ArrowLeft className="mr-2 h-4 w-4" /> Volver a Clientes</Link>
         </Button>
       </div>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-2xl">{customer.first_name} {customer.last_name}</CardTitle>
-          <CardDescription>Información de Contacto</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {customer.email && <div className="flex items-center"><Mail className="mr-2 h-4 w-4 text-muted-foreground" /> {customer.email}</div>}
-          {customer.phone && <div className="flex items-center"><Phone className="mr-2 h-4 w-4 text-muted-foreground" /> {customer.phone}</div>}
-          {customer.address && <div className="flex items-center"><Home className="mr-2 h-4 w-4 text-muted-foreground" /> {customer.address}</div>}
-        </CardContent>
-      </Card>
-
-      <h2 className="text-xl font-semibold mb-4">Historial de Servicios</h2>
-      {isLoadingOrders ? (
-        <div className="space-y-2"><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /></div>
-      ) : isErrorOrders ? (
-        <div className="text-red-500">Error al cargar el historial de servicios.</div>
-      ) : serviceOrders && serviceOrders.length > 0 ? (
-        <ServiceOrdersTable serviceOrders={serviceOrders} onEdit={handleEditClick} onDelete={handleDeleteClick} />
-      ) : (
-        <div className="text-center text-muted-foreground p-8 border border-dashed rounded-lg">
-          Este cliente no tiene órdenes de servicio registradas.
+      <div className="grid gap-6 md:grid-cols-3">
+        <div className="md:col-span-1 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl">{customer.first_name} {customer.last_name}</CardTitle>
+              <CardDescription>Información de Contacto</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {customer.email && <div className="flex items-center"><Mail className="mr-2 h-4 w-4 text-muted-foreground" /> {customer.email}</div>}
+              {customer.phone && <div className="flex items-center"><Phone className="mr-2 h-4 w-4 text-muted-foreground" /> {customer.phone}</div>}
+              {customer.address && <div className="flex items-center"><Home className="mr-2 h-4 w-4 text-muted-foreground" /> {customer.address}</div>}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Registro de Llamadas</CardTitle>
+                <CardDescription>Historial de conversaciones.</CardDescription>
+              </div>
+              <Button size="sm" onClick={() => setIsCallLogFormOpen(true)}>
+                <PlusCircle className="h-4 w-4" />
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {isLoadingCallLogs ? <Skeleton className="h-24 w-full" /> : (
+                callLogs && callLogs.length > 0 ? (
+                  <div className="space-y-4 max-h-64 overflow-y-auto">
+                    {callLogs.map(log => (
+                      <div key={log.id} className="text-sm">
+                        <p className="font-medium">{format(new Date(log.created_at), "PPP p", { locale: es })}</p>
+                        <p className="text-muted-foreground whitespace-pre-wrap">{log.notes}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : <p className="text-sm text-muted-foreground text-center py-4">No hay registros de llamadas.</p>
+              )}
+            </CardContent>
+          </Card>
         </div>
-      )}
+
+        <div className="md:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Historial de Servicios</CardTitle>
+              <CardDescription>Todas las órdenes de servicio asociadas a este cliente.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingOrders ? <Skeleton className="h-48 w-full" /> : isErrorOrders ? (
+                <div className="text-red-500">Error al cargar el historial.</div>
+              ) : serviceOrders && serviceOrders.length > 0 ? (
+                <ServiceOrdersTable serviceOrders={serviceOrders} onEdit={handleEditServiceClick} onDelete={handleDeleteServiceClick} />
+              ) : (
+                <div className="text-center text-muted-foreground py-8">No hay órdenes de servicio.</div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {!isLoadingAllCustomers && allCustomers && (
-        <ServiceOrderForm
-            isOpen={isFormOpen}
-            onOpenChange={setIsFormOpen}
-            onSuccess={handleSuccess}
-            customers={allCustomers}
-            serviceOrder={selectedOrder}
-        />
+        <ServiceOrderForm isOpen={isServiceFormOpen} onOpenChange={setIsServiceFormOpen} onSuccess={handleServiceSuccess} customers={allCustomers} serviceOrder={selectedOrder} />
       )}
+      <CallLogForm isOpen={isCallLogFormOpen} onOpenChange={setIsCallLogFormOpen} onSuccess={handleCallLogSuccess} customerId={customer.id} />
     </Layout>
   );
 };
