@@ -1,87 +1,123 @@
-import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
-import Layout from '@/components/Layout';
+import { useMemo, useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { EventContentArg } from '@fullcalendar/core';
+import { Badge } from '@/components/ui/badge';
+import { ServiceOrderDialog } from '@/components/ServiceOrderDialog';
+import { ServiceOrder } from '@/lib/types';
+import { es } from 'date-fns/locale/es';
 
-const fetchScheduledServices = async () => {
-  const { data, error } = await supabase
-    .from('service_orders')
-    .select('*, customers(id, first_name, last_name)')
-    .not('service_date', 'is', null);
+const Calendar = () => {
+  const [selectedEvent, setSelectedEvent] = useState<ServiceOrder | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  if (error) throw new Error(error.message);
-  return data;
-};
+  const { data: services, isLoading, error } = useQuery<ServiceOrder[]>({
+    queryKey: ['servicesForCalendar'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('service_orders')
+        .select(`
+          id,
+          description,
+          service_date,
+          status,
+          customers (
+            id,
+            first_name,
+            last_name,
+            phone,
+            address
+          )
+        `)
+        .neq('status', 'Completado');
 
-const CalendarPage = () => {
-  const navigate = useNavigate();
-  const { data: services, isLoading } = useQuery({
-    queryKey: ['scheduledServices'],
-    queryFn: fetchScheduledServices,
+      if (error) throw new Error(error.message);
+      return data;
+    },
   });
 
-  const events = services?.map(service => ({
-    id: service.id,
-    title: `${service.customers?.first_name || 'Cliente'} - ${service.description}`,
-    start: service.service_date,
-    allDay: true,
-    extendedProps: {
-      customerId: service.customers?.id,
-      status: service.status,
-    },
-    // Asignar colores según el estado
-    backgroundColor: service.status === 'Completado' ? '#16a34a' // green-600
-                   : service.status === 'Cancelado' ? '#dc2626' // red-600
-                   : service.status === 'En Progreso' ? '#2563eb' // blue-600
-                   : '#f97316', // orange-500 for Pendiente
-    borderColor: service.status === 'Completado' ? '#16a34a'
-                 : service.status === 'Cancelado' ? '#dc2626'
-                 : service.status === 'En Progreso' ? '#2563eb'
-                 : '#f97316',
-  })) || [];
+  const events = useMemo(() => {
+    if (!services) return [];
+    return services.map(service => ({
+      id: service.id,
+      title: `${service.customers?.[0]?.first_name || 'Cliente'} - ${service.description}`,
+      start: service.service_date,
+      end: service.service_date,
+      allDay: true,
+      extendedProps: {
+        customerId: service.customers?.[0]?.id,
+        status: service.status,
+        description: service.description,
+        customer: service.customers?.[0]
+      },
+      backgroundColor: getStatusColor(service.status),
+      borderColor: getStatusColor(service.status),
+    }));
+  }, [services]);
 
   const handleEventClick = (clickInfo: any) => {
-    const customerId = clickInfo.event.extendedProps.customerId;
-    if (customerId) {
-      navigate(`/customers/${customerId}`);
+    const serviceId = clickInfo.event.id;
+    const service = services?.find(s => s.id.toString() === serviceId.toString());
+    if (service) {
+      setSelectedEvent(service);
+      setIsDialogOpen(true);
     }
   };
 
-  return (
-    <Layout>
-      <h1 className="text-lg font-semibold md:text-2xl mb-4">Calendario de Servicios</h1>
-      <div className="p-4 bg-card rounded-lg border shadow-sm">
-        {isLoading ? (
-          <Skeleton className="h-[600px] w-full" />
-        ) : (
-          <FullCalendar
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-            initialView="dayGridMonth"
-            headerToolbar={{
-              left: 'prev,next today',
-              center: 'title',
-              right: 'dayGridMonth,timeGridWeek,timeGridDay'
-            }}
-            events={events}
-            eventClick={handleEventClick}
-            height="auto"
-            locale="es"
-            buttonText={{
-                today:    'hoy',
-                month:    'mes',
-                week:     'semana',
-                day:      'día',
-            }}
-          />
-        )}
+  const renderEventContent = (eventInfo: EventContentArg) => {
+    return (
+      <div className="p-1">
+        <p className="font-semibold text-white truncate">{eventInfo.event.title}</p>
+        <Badge variant="secondary" className="text-xs">{eventInfo.event.extendedProps.status}</Badge>
       </div>
-    </Layout>
+    );
+  };
+
+  if (isLoading) return <div>Cargando calendario...</div>;
+  if (error) return <div>Error al cargar los servicios: {error.message}</div>;
+
+  return (
+    <div className="p-4">
+      <FullCalendar
+        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+        initialView="dayGridMonth"
+        headerToolbar={{
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        }}
+        events={events}
+        eventContent={renderEventContent}
+        eventClick={handleEventClick}
+        locale={es}
+        height="auto"
+      />
+      {selectedEvent && (
+        <ServiceOrderDialog
+          isOpen={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          serviceOrder={selectedEvent}
+        />
+      )}
+    </div>
   );
 };
 
-export default CalendarPage;
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'Pendiente':
+      return '#f59e0b'; // amber-500
+    case 'En progreso':
+      return '#3b82f6'; // blue-500
+    case 'Cancelado':
+      return '#ef4444'; // red-500
+    default:
+      return '#6b7280'; // gray-500
+  }
+};
+
+export default Calendar;
