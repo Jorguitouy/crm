@@ -21,7 +21,7 @@ interface ServiceOrdersTableProps {
   serviceOrders: ServiceOrder[];
   onEdit: (serviceOrder: ServiceOrder) => void;
   onDelete: (serviceOrderId: string) => void;
-  onStatusChange: (serviceOrderId: string, newStatus: string) => void;
+  onMarkComplete: (serviceOrder: ServiceOrder) => void; // Prop actualizada
 }
 
 const getStatusVariant = (status: string) => {
@@ -33,7 +33,7 @@ const getStatusVariant = (status: string) => {
   }
 };
 
-export const ServiceOrdersTable = ({ serviceOrders, onEdit, onDelete, onStatusChange }: ServiceOrdersTableProps) => {
+export const ServiceOrdersTable = ({ serviceOrders, onEdit, onDelete, onMarkComplete }: ServiceOrdersTableProps) => {
   return (
     <div className="rounded-lg border shadow-sm">
       <Table>
@@ -70,7 +70,7 @@ export const ServiceOrdersTable = ({ serviceOrders, onEdit, onDelete, onStatusCh
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                     {order.status !== 'Completado' && (
-                        <DropdownMenuItem onClick={() => onStatusChange(order.id, 'Completado')}>
+                        <DropdownMenuItem onClick={() => onMarkComplete(order)}>
                             <CheckCircle className="mr-2 h-4 w-4" />
                             Marcar como Completado
                         </DropdownMenuItem>

@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Users, Clock, Wrench, DollarSign, PlusCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton"; // Error 1: Importación añadida
+import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -28,7 +28,6 @@ const fetchDashboardStats = async () => {
 const fetchPendingServiceOrders = async () => {
     const { data, error } = await supabase
       .from('service_orders')
-      // Errors 2, 3, 4: Cambiado a '*' para asegurar la estructura de datos correcta
       .select('*, customers(id, first_name, last_name)')
       .in('status', ['Pendiente', 'En Progreso'])
       .order('created_at', { ascending: true })
@@ -87,7 +86,7 @@ const Index = () => {
                                         </p>
                                     </div>
                                     <Button variant="secondary" size="sm" asChild>
-                                        <Link to="/services">Ver</Link>
+                                        <Link to={`/customers/${order.customers?.id}`}>Ver Cliente</Link>
                                     </Button>
                                 </div>
                             ))}

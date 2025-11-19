@@ -11,6 +11,7 @@ import { ServiceOrdersTable } from '@/components/ServiceOrdersTable';
 import { EditServiceOrderForm } from '@/components/EditServiceOrderForm';
 import { SmartServiceOrderForm } from '@/components/SmartServiceOrderForm';
 import { CallLogForm } from '@/components/CallLogForm';
+import { CompleteOrderDialog } from '@/components/CompleteOrderDialog';
 import { showError, showSuccess } from '@/utils/toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -45,6 +46,7 @@ const CustomerDetail = () => {
   const [isNewOrderFormOpen, setIsNewOrderFormOpen] = useState(false);
   const [isEditOrderFormOpen, setIsEditOrderFormOpen] = useState(false);
   const [isCallLogFormOpen, setIsCallLogFormOpen] = useState(false);
+  const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   const { data: customer, isLoading: isLoadingCustomer, isError: isErrorCustomer } = useQuery({
@@ -75,6 +77,11 @@ const CustomerDetail = () => {
     setIsEditOrderFormOpen(true);
   };
 
+  const handleMarkCompleteClick = (order: any) => {
+    setSelectedOrder(order);
+    setIsCompleteDialogOpen(true);
+  };
+
   const handleDeleteServiceClick = async (orderId: string) => {
     if (!window.confirm("¿Estás seguro de que quieres eliminar esta orden?")) return;
     try {
@@ -88,11 +95,11 @@ const CustomerDetail = () => {
     }
   };
 
-  const handleStatusChange = async (orderId: string, newStatus: string) => {
+  const handleConfirmComplete = async (orderId: string, finalCost: number) => {
     try {
-        const { error } = await supabase.from('service_orders').update({ status: newStatus }).eq('id', orderId);
+        const { error } = await supabase.from('service_orders').update({ status: 'Completado', cost: finalCost }).eq('id', orderId);
         if (error) throw error;
-        showSuccess(`Orden marcada como ${newStatus}.`);
+        showSuccess(`Orden completada.`);
         queryClient.invalidateQueries({ queryKey: ['customerServiceOrders', id] });
         queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
     } catch (error) {
@@ -179,7 +186,7 @@ const CustomerDetail = () => {
               {isLoadingOrders ? <Skeleton className="h-48 w-full" /> : isErrorOrders ? (
                 <div className="text-red-500">Error al cargar el historial.</div>
               ) : serviceOrders && serviceOrders.length > 0 ? (
-                <ServiceOrdersTable serviceOrders={serviceOrders} onEdit={handleEditServiceClick} onDelete={handleDeleteServiceClick} onStatusChange={handleStatusChange} />
+                <ServiceOrdersTable serviceOrders={serviceOrders} onEdit={handleEditServiceClick} onDelete={handleDeleteServiceClick} onMarkComplete={handleMarkCompleteClick} />
               ) : (
                 <div className="text-center text-muted-foreground py-8">No hay órdenes de servicio.</div>
               )}
@@ -193,6 +200,9 @@ const CustomerDetail = () => {
       )}
       {selectedOrder && (
         <EditServiceOrderForm isOpen={isEditOrderFormOpen} onOpenChange={setIsEditOrderFormOpen} onSuccess={handleServiceSuccess} serviceOrder={selectedOrder} />
+      )}
+      {selectedOrder && (
+        <CompleteOrderDialog isOpen={isCompleteDialogOpen} onOpenChange={setIsCompleteDialogOpen} onConfirm={handleConfirmComplete} serviceOrder={selectedOrder} />
       )}
       <CallLogForm isOpen={isCallLogFormOpen} onOpenChange={setIsCallLogFormOpen} onSuccess={handleCallLogSuccess} customerId={customer.id} />
     </Layout>

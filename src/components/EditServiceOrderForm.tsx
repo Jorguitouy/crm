@@ -112,6 +112,10 @@ export const EditServiceOrderForm = ({ isOpen, onOpenChange, onSuccess, serviceO
             </Select>
           </div>
           <div><Label htmlFor="technician">Técnico Asignado</Label><Input id="technician" {...register("technician")} /></div>
+          <div>
+            <Label htmlFor="notes">Notas Internas / Diagnóstico</Label>
+            <Textarea id="notes" {...register("notes")} placeholder="Ej: Se revisó la resistencia, parece estar quemada. Presupuestar cambio." />
+          </div>
           <div><Label htmlFor="cost">Costo Total (UYU)</Label><Input id="cost" type="number" step="0.01" {...register("cost")} /></div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
