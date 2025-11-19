@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 const fetchScheduledServices = async () => {
   const { data, error } = await supabase
     .from('service_orders')
-    .select('id, description, service_date, status, customers(id, first_name, last_name)')
+    .select('*, customers(id, first_name, last_name)')
     .not('service_date', 'is', null);
 
   if (error) throw new Error(error.message);
