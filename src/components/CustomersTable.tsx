@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal } from "lucide-react";
+import { Link } from "react-router-dom"; // Importamos Link
 
 interface Customer {
     id: string;
@@ -48,7 +49,9 @@ export const CustomersTable = ({ customers, onEdit, onDelete }: CustomersTablePr
                 {customers.map((customer) => (
                     <TableRow key={customer.id}>
                         <TableCell className="font-medium">
-                            {customer.first_name} {customer.last_name}
+                            <Link to={`/customers/${customer.id}`} className="hover:underline text-primary">
+                                {customer.first_name} {customer.last_name}
+                            </Link>
                         </TableCell>
                         <TableCell>{customer.email}</TableCell>
                         <TableCell>{customer.phone}</TableCell>
