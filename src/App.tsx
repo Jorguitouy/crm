@@ -3,22 +3,22 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthProvider";
+import { AuthProvider } from "@/contexts/AuthProvider";
 
 // Páginas Públicas
-import LandingPage from "./pages/LandingPage";
-import LoginPage from "./pages/LoginPage";
-import NotFound from "./pages/NotFound";
+import LandingPage from "@/pages/LandingPage";
+import LoginPage from "@/pages/LoginPage";
+import NotFound from "@/pages/NotFound";
 
 // Páginas del CRM
-import ProtectedRoute from "./components/ProtectedRoute";
-import Dashboard from "./pages/app/Dashboard";
-import Customers from "./pages/app/Customers";
-import CustomerDetail from "./pages/app/CustomerDetail";
-import Services from "./pages/app/Services";
-import Audiences from "./pages/app/Audiences";
-import CalendarPage from "./pages/app/Calendar";
-import Settings from "./pages/app/Settings";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import Dashboard from "@/pages/app/Dashboard";
+import Customers from "@/pages/app/Customers";
+import CustomerDetail from "@/pages/app/CustomerDetail";
+import Services from "@/pages/app/Services";
+import Audiences from "@/pages/app/Audiences";
+import CalendarPage from "@/pages/app/Calendar";
+import Settings from "@/pages/app/Settings";
 
 const queryClient = new QueryClient();
 
