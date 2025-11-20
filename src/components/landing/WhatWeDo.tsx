@@ -8,7 +8,7 @@ const services = [
 ];
 
 export const WhatWeDo = () => (
-  <section id="what-we-do" className="py-16 bg-gray-50">
+  <section id="what-we-do" className="py-16">
     <div className="container mx-auto px-4">
       <h2 className="text-3xl font-bold text-center mb-2">¿Qué hacemos?</h2>
       <div className="w-24 h-1 bg-[#0a4a8e] mx-auto mb-12"></div>

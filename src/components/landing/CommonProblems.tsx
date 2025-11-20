@@ -9,13 +9,13 @@ const problems = [
 ];
 
 export const CommonProblems = () => (
-  <section id="problems" className="py-16">
+  <section id="problems" className="py-16 bg-gray-50">
     <div className="container mx-auto px-4">
       <h2 className="text-3xl font-bold text-center mb-2">Arreglo de calefones en Montevideo</h2>
       <div className="w-24 h-1 bg-[#0a4a8e] mx-auto mb-12"></div>
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
         {problems.map((problem, index) => (
-          <Card key={index} className="flex flex-col">
+          <Card key={index} className="flex flex-col text-center">
             <CardHeader>
               <CardTitle>{problem.title}</CardTitle>
             </CardHeader>
