@@ -6,11 +6,11 @@ import { supabase } from '@/lib/supabase';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const navItems = [
-  { href: '/', label: 'Dashboard', icon: Home },
-  { href: '/calendar', label: 'Calendario', icon: CalendarIcon },
-  { href: '/customers', label: 'Clientes', icon: Users },
-  { href: '/services', label: 'Servicios', icon: Wrench },
-  { href: '/audiences', label: 'Audiencias', icon: Target },
+  { href: '/app', label: 'Dashboard', icon: Home },
+  { href: '/app/calendar', label: 'Calendario', icon: CalendarIcon },
+  { href: '/app/customers', label: 'Clientes', icon: Users },
+  { href: '/app/services', label: 'Servicios', icon: Wrench },
+  { href: '/app/audiences', label: 'Audiencias', icon: Target },
 ];
 
 const Sidebar = () => {
@@ -25,7 +25,7 @@ const Sidebar = () => {
     <div className="hidden border-r bg-muted/40 md:block">
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-          <NavLink to="/" className="flex items-center gap-2 font-semibold">
+          <NavLink to="/app" className="flex items-center gap-2 font-semibold">
             <Wrench className="h-6 w-6" />
             <span>Servi-CRM</span>
           </NavLink>
@@ -36,6 +36,7 @@ const Sidebar = () => {
               <NavLink
                 key={item.label}
                 to={item.href}
+                end={item.href === '/app'}
                 className={({ isActive }) =>
                   `flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary ${
                     isActive ? 'bg-muted text-primary' : ''
@@ -50,7 +51,7 @@ const Sidebar = () => {
         </div>
         <div className="mt-auto p-4">
             <NavLink
-                to="/settings"
+                to="/app/settings"
                 className={({ isActive }) =>
                   `flex items-center gap-3 rounded-lg px-3 py-2 mb-2 text-muted-foreground transition-all hover:text-primary ${
                     isActive ? 'bg-muted text-primary' : ''
@@ -89,7 +90,7 @@ const MobileNav = () => {
             <SheetContent side="left" className="flex flex-col">
                 <nav className="grid gap-2 text-lg font-medium">
                     <NavLink
-                        to="/"
+                        to="/app"
                         className="flex items-center gap-2 text-lg font-semibold mb-4"
                     >
                         <Wrench className="h-6 w-6" />
@@ -99,6 +100,7 @@ const MobileNav = () => {
                         <NavLink
                             key={item.label}
                             to={item.href}
+                            end={item.href === '/app'}
                             className={({ isActive }) =>
                                 `flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground ${
                                     isActive ? 'bg-muted text-foreground' : ''
@@ -110,7 +112,7 @@ const MobileNav = () => {
                         </NavLink>
                     ))}
                      <NavLink
-                        to="/settings"
+                        to="/app/settings"
                         className={({ isActive }) =>
                             `flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground ${
                                 isActive ? 'bg-muted text-foreground' : ''
