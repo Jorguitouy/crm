@@ -7,6 +7,8 @@ import { Faq } from '@/components/landing/Faq';
 import { About } from '@/components/landing/About';
 import { Footer } from '@/components/landing/Footer';
 import { Testimonials } from '@/components/landing/Testimonials';
+import { CommonProblems } from '@/components/landing/CommonProblems';
+import { WhatWeDo } from '@/components/landing/WhatWeDo';
 
 const structuredData = [
       {
@@ -47,7 +49,9 @@ const LandingPage = () => {
           <Hero />
           <CtaBar />
           <Services />
+          <CommonProblems />
           <Faq />
+          <WhatWeDo />
           <About />
           <Testimonials />
         </main>
