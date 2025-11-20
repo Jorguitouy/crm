@@ -12,13 +12,13 @@ import NotFound from "@/pages/NotFound";
 
 // Páginas del CRM
 import ProtectedRoute from "@/components/ProtectedRoute";
-import Dashboard from "@/pages/app/Dashboard";
-import Customers from "@/pages/app/Customers";
-import CustomerDetail from "@/pages/app/CustomerDetail";
-import Services from "@/pages/app/Services";
-import Audiences from "@/pages/app/Audiences";
-import CalendarPage from "@/pages/app/Calendar";
-import Settings from "@/pages/app/Settings";
+import Dashboard from "@/pages/Index"; // Corregido
+import Customers from "@/pages/Customers"; // Corregido
+import CustomerDetail from "@/pages/CustomerDetail"; // Corregido
+import Services from "@/pages/Services"; // Corregido
+import Audiences from "@/pages/Audiences"; // Corregido
+import CalendarPage from "@/pages/Calendar"; // Corregido
+import Settings from "@/pages/Settings"; // Corregido
 
 const queryClient = new QueryClient();
 
