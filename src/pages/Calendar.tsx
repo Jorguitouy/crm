@@ -10,8 +10,11 @@ import { Badge } from '@/components/ui/badge';
 import { ServiceOrderDialog } from '@/components/ServiceOrderDialog';
 import { ServiceOrder } from '@/lib/types';
 import { es } from 'date-fns/locale/es';
+import Layout from '@/components/Layout'; // Importamos el Layout
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const Calendar = () => {
+const CalendarPage = () => {
   const [selectedEvent, setSelectedEvent] = useState<ServiceOrder | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -77,25 +80,33 @@ const Calendar = () => {
     );
   };
 
-  if (isLoading) return <div>Cargando calendario...</div>;
-  if (error) return <div>Error al cargar los servicios: {error.message}</div>;
-
   return (
-    <div className="p-4">
-      <FullCalendar
-        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-        initialView="dayGridMonth"
-        headerToolbar={{
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        }}
-        events={events}
-        eventContent={renderEventContent}
-        eventClick={handleEventClick}
-        locale={es}
-        height="auto"
-      />
+    <Layout>
+      <h1 className="text-lg font-semibold md:text-2xl mb-4">Calendario de Servicios</h1>
+      <Card>
+        <CardContent className="p-4">
+          {isLoading ? (
+            <Skeleton className="h-[600px] w-full" />
+          ) : error ? (
+            <div className="text-red-500">Error al cargar los servicios: {error.message}</div>
+          ) : (
+            <FullCalendar
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+              initialView="dayGridMonth"
+              headerToolbar={{
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+              }}
+              events={events}
+              eventContent={renderEventContent}
+              eventClick={handleEventClick}
+              locale={es}
+              height="auto"
+            />
+          )}
+        </CardContent>
+      </Card>
       {selectedEvent && (
         <ServiceOrderDialog
           isOpen={isDialogOpen}
@@ -103,7 +114,7 @@ const Calendar = () => {
           serviceOrder={selectedEvent}
         />
       )}
-    </div>
+    </Layout>
   );
 };
 
@@ -120,4 +131,4 @@ const getStatusColor = (status: string) => {
   }
 };
 
-export default Calendar;
+export default CalendarPage;
