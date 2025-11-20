@@ -18,24 +18,11 @@ const structuredData = [
         "url": "https://calefon.uy",
         "telephone": "+59896758200",
         "priceRange": "$",
-        "address": {
-          "@type": "PostalAddress",
-          "addressLocality": "Montevideo",
-          "addressCountry": "UY"
-        },
-        "areaServed": {
-          "@type": "City",
-          "name": "Montevideo"
-        },
-        "openingHoursSpecification": {
-          "@type": "OpeningHoursSpecification",
-          "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
-          "opens": "07:30",
-          "closes": "21:30"
-        },
+        "address": { "@type": "PostalAddress", "addressLocality": "Montevideo", "addressCountry": "UY" },
+        "areaServed": { "@type": "City", "name": "Montevideo" },
+        "openingHoursSpecification": { "@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"], "opens": "07:30", "closes": "21:30" },
         "serviceType": "Reparación de calefones eléctricos"
-      },
-      // ... (resto de tu JSON-LD)
+      }
 ];
 
 const LandingPage = () => {

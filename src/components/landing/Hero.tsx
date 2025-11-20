@@ -10,7 +10,7 @@ export const Hero = () => (
       <p className="max-w-2xl mx-auto text-lg md:text-xl mb-8">
         <strong>Nuestro equipo de técnicos está en su zona para darle una solución rápida y garantizada en el día.</strong>
       </p>
-      <a href="https://wa.me/59896758200?text=Hola" className="inline-flex items-center gap-3 bg-[#25d366] text-white font-bold py-4 px-8 rounded-full text-lg">
+      <a href="https://wa.me/59896758200?text=Hola" className="inline-flex items-center gap-3 bg-[#25d366] text-white font-bold py-4 px-8 rounded-full text-lg transition-transform hover:scale-105">
         <span>Pedir Presupuesto Gratis</span>
       </a>
     </div>
