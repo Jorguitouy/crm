@@ -6,19 +6,18 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthProvider";
 
 // Páginas Públicas
-import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/LoginPage";
 import NotFound from "@/pages/NotFound";
 
 // Páginas del CRM
 import ProtectedRoute from "@/components/ProtectedRoute";
-import Dashboard from "@/pages/Index"; // Corregido
-import Customers from "@/pages/Customers"; // Corregido
-import CustomerDetail from "@/pages/CustomerDetail"; // Corregido
-import Services from "@/pages/Services"; // Corregido
-import Audiences from "@/pages/Audiences"; // Corregido
-import CalendarPage from "@/pages/Calendar"; // Corregido
-import Settings from "@/pages/Settings"; // Corregido
+import Dashboard from "@/pages/Index";
+import Customers from "@/pages/Customers";
+import CustomerDetail from "@/pages/CustomerDetail";
+import Services from "@/pages/Services";
+import Audiences from "@/pages/Audiences";
+import CalendarPage from "@/pages/Calendar";
+import Settings from "@/pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -30,8 +29,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            {/* Rutas Públicas */}
-            <Route path="/" element={<LandingPage />} />
+            {/* La ruta "/" ya no es manejada por React. El servidor mostrará public/index.html */}
             <Route path="/login" element={<LoginPage />} />
 
             {/* Rutas Privadas del CRM */}
