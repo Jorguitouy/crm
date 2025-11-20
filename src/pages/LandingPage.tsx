@@ -10,6 +10,7 @@ import { CommonProblems } from '@/components/landing/CommonProblems';
 import { WhatWeDo } from '@/components/landing/WhatWeDo';
 import { Stats } from '@/components/landing/Stats';
 import { FloatingCta } from '@/components/landing/FloatingCta';
+import { ContactForm } from '@/components/landing/ContactForm';
 
 const structuredData = [ /* ... tu JSON-LD ... */ ];
 
@@ -32,6 +33,7 @@ const LandingPage = () => {
           <About />
           <Testimonials />
           <Faq />
+          <ContactForm />
           <Stats />
         </main>
         <Footer />
