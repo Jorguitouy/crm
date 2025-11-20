@@ -1,47 +1,51 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Phone, Menu, X } from 'lucide-react';
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-50">
-      <div className="bg-[#0a4a8e] text-white py-2 px-4">
-        <div className="container mx-auto flex justify-between items-center flex-wrap gap-2 text-xs sm:text-sm">
-          <p>¡Reparación en el día y en el acto!</p>
-          <div className="flex items-center gap-2">
-            <a href="tel:096758200" className="flex items-center gap-2 bg-[#ffc400] text-[#0a4a8e] font-bold py-1 px-3 rounded-full">
-              <Phone size={14} />
-              <span>Llamar: 096 758 200</span>
+    <header className={`sticky top-0 z-50 transition-shadow duration-300 ${isScrolled ? 'shadow-md bg-white/80 backdrop-blur-lg' : 'bg-white'}`}>
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between items-center py-4">
+          <a href="/" className="text-2xl font-black text-brand-blue">Calefon.UY</a>
+          <nav className="hidden md:flex items-center gap-6 text-sm font-semibold">
+            <a href="#services" className="hover:text-brand-blue">Servicios</a>
+            <a href="#problems" className="hover:text-brand-blue">Problemas Comunes</a>
+            <a href="#about" className="hover:text-brand-blue">Nosotros</a>
+            <a href="#faq" className="hover:text-brand-blue">Preguntas</a>
+          </nav>
+          <div className="flex items-center gap-4">
+            <a href="tel:096758200" className="hidden sm:flex items-center gap-2 text-sm font-bold text-brand-blue">
+              <Phone size={16} />
+              <span>096 758 200</span>
             </a>
-            <a href="https://wa.me/59896758200?text=Hola" className="flex items-center gap-2 bg-[#25d366] text-white font-bold py-1 px-3 rounded-full">
-              <span>WhatsApp</span>
-            </a>
+            <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Abrir menú">
+              {isMenuOpen ? <X /> : <Menu />}
+            </button>
           </div>
-        </div>
-      </div>
-      <nav className="py-4">
-        <div className="container mx-auto px-4 flex justify-between items-center">
-          <a href="/" className="text-2xl font-black text-[#0a4a8e]">Calefon.UY</a>
-          <div className="hidden md:flex items-center gap-6">
-            <a href="#services" className="font-bold text-sm hover:underline">SERVICE DE CALEFONES</a>
-            <a href="#faq" className="font-bold text-sm hover:underline">FALLAS FRECUENTES</a>
-            <a href="#about" className="font-bold text-sm hover:underline">SOBRE NOSOTROS</a>
-            <a href="https://wa.me/59896758200?text=Hola" className="bg-[#25d366] text-white font-bold py-2 px-4 rounded-full text-sm">CONTACTO</a>
-          </div>
-          <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X className="text-[#0a4a8e]" /> : <Menu className="text-[#0a4a8e]" />}
-          </button>
         </div>
         {isMenuOpen && (
-          <div className="md:hidden mt-4 px-4 space-y-2 pb-4 border-t">
-            <a href="#services" className="block font-bold text-sm py-2" onClick={() => setIsMenuOpen(false)}>SERVICE DE CALEFONES</a>
-            <a href="#faq" className="block font-bold text-sm py-2" onClick={() => setIsMenuOpen(false)}>FALLAS FRECUENTES</a>
-            <a href="#about" className="block font-bold text-sm py-2" onClick={() => setIsMenuOpen(false)}>SOBRE NOSOTROS</a>
-            <a href="https://wa.me/59896758200?text=Hola" className="block bg-[#25d366] text-white font-bold py-2 px-4 rounded-full text-sm text-center" onClick={() => setIsMenuOpen(false)}>CONTACTO</a>
+          <div className="md:hidden pb-4 px-4 border-t">
+            <nav className="flex flex-col gap-4 pt-4 text-center font-semibold">
+              <a href="#services" onClick={() => setIsMenuOpen(false)}>Servicios</a>
+              <a href="#problems" onClick={() => setIsMenuOpen(false)}>Problemas Comunes</a>
+              <a href="#about" onClick={() => setIsMenuOpen(false)}>Nosotros</a>
+              <a href="#faq" onClick={() => setIsMenuOpen(false)}>Preguntas</a>
+              <a href="https://wa.me/59896758200?text=Hola" className="bg-brand-whatsapp-green text-white py-2 px-4 rounded-md">Contactar por WhatsApp</a>
+            </nav>
           </div>
         )}
-      </nav>
+      </div>
     </header>
   );
 };
