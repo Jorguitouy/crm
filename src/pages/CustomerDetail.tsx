@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthProvider';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -23,7 +24,7 @@ const fetchCustomerDetails = async (id: string) => {
 };
 
 const fetchCustomerServiceOrders = async (id: string) => {
-  const { data, error } = await supabase.from('service_orders').select('*, customers(first_name, last_name)').eq('customer_id', id).order('created_at', { ascending: false });
+  const { data, error } = await supabase.from('service_orders').select('*, customers(*)').eq('customer_id', id).order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
   return data;
 };
@@ -40,8 +41,16 @@ const fetchCallLogs = async (customerId: string) => {
   return data;
 };
 
+const fetchUserProfile = async (userId: string) => {
+    if (!userId) return null;
+    const { data, error } = await supabase.from('user_profiles').select('*').eq('id', userId).single();
+    if (error && error.code !== 'PGRST116') throw new Error(error.message);
+    return data;
+};
+
 const CustomerDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isNewOrderFormOpen, setIsNewOrderFormOpen] = useState(false);
   const [isEditOrderFormOpen, setIsEditOrderFormOpen] = useState(false);
@@ -72,27 +81,24 @@ const CustomerDetail = () => {
     queryFn: fetchAllCustomers,
   });
 
-  const handleEditServiceClick = (order: any) => {
-    setSelectedOrder(order);
-    setIsEditOrderFormOpen(true);
-  };
+  const { data: userProfile } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: () => fetchUserProfile(user!.id),
+    enabled: !!user,
+  });
 
-  const handleMarkCompleteClick = (order: any) => {
-    setSelectedOrder(order);
-    setIsCompleteDialogOpen(true);
-  };
+  const handleEditServiceClick = (order: any) => { setSelectedOrder(order); setIsEditOrderFormOpen(true); };
+  const handleMarkCompleteClick = (order: any) => { setSelectedOrder(order); setIsCompleteDialogOpen(true); };
 
   const handleDeleteServiceClick = async (orderId: string) => {
-    if (!window.confirm("¿Estás seguro de que quieres eliminar esta orden?")) return;
+    if (!window.confirm("¿Estás seguro?")) return;
     try {
       const { error } = await supabase.from('service_orders').delete().eq('id', orderId);
       if (error) throw error;
-      showSuccess("Orden eliminada correctamente.");
+      showSuccess("Orden eliminada.");
       queryClient.invalidateQueries({ queryKey: ['customerServiceOrders', id] });
       queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
-    } catch (error) {
-      showError((error as Error).message);
-    }
+    } catch (error) { showError((error as Error).message); }
   };
 
   const handleConfirmComplete = async (orderId: string, finalCost: number) => {
@@ -102,9 +108,7 @@ const CustomerDetail = () => {
         showSuccess(`Orden completada.`);
         queryClient.invalidateQueries({ queryKey: ['customerServiceOrders', id] });
         queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
-    } catch (error) {
-        showError((error as Error).message);
-    }
+    } catch (error) { showError((error as Error).message); }
   };
 
   const handleServiceSuccess = () => {
@@ -113,36 +117,21 @@ const CustomerDetail = () => {
     queryClient.invalidateQueries({ queryKey: ['customers'] });
   };
 
-  const handleCallLogSuccess = () => {
-    queryClient.invalidateQueries({ queryKey: ['callLogs', id] });
-  };
+  const handleCallLogSuccess = () => { queryClient.invalidateQueries({ queryKey: ['callLogs', id] }); };
 
-  if (isLoadingCustomer) {
-    return <Layout><Skeleton className="h-screen w-full" /></Layout>;
-  }
-
-  if (isErrorCustomer || !customer) {
-    return <Layout><div className="text-red-500">Error: No se pudo encontrar al cliente.</div></Layout>;
-  }
+  if (isLoadingCustomer) { return <Layout><Skeleton className="h-screen w-full" /></Layout>; }
+  if (isErrorCustomer || !customer) { return <Layout><div className="text-red-500">Error: No se pudo encontrar al cliente.</div></Layout>; }
 
   return (
     <Layout>
       <div className="flex items-center justify-between mb-4">
-        <Button variant="outline" asChild>
-          <Link to="/customers"><ArrowLeft className="mr-2 h-4 w-4" /> Volver a Clientes</Link>
-        </Button>
-        <Button onClick={() => setIsNewOrderFormOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" /> Nueva Orden para este Cliente
-        </Button>
+        <Button variant="outline" asChild><Link to="/customers"><ArrowLeft className="mr-2 h-4 w-4" /> Volver a Clientes</Link></Button>
+        <Button onClick={() => setIsNewOrderFormOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Nueva Orden para este Cliente</Button>
       </div>
-
       <div className="grid gap-6 md:grid-cols-3">
         <div className="md:col-span-1 space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">{customer.first_name} {customer.last_name}</CardTitle>
-              <CardDescription>Información de Contacto</CardDescription>
-            </CardHeader>
+            <CardHeader><CardTitle className="text-2xl">{customer.first_name} {customer.last_name}</CardTitle><CardDescription>Información de Contacto</CardDescription></CardHeader>
             <CardContent className="space-y-2">
               {customer.email && <div className="flex items-center"><Mail className="mr-2 h-4 w-4 text-muted-foreground" /> {customer.email}</div>}
               {customer.phone && <div className="flex items-center"><Phone className="mr-2 h-4 w-4 text-muted-foreground" /> {customer.phone}</div>}
@@ -151,62 +140,39 @@ const CustomerDetail = () => {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Registro de Llamadas</CardTitle>
-                <CardDescription>Historial de conversaciones.</CardDescription>
-              </div>
-              <Button size="sm" onClick={() => setIsCallLogFormOpen(true)}>
-                <PlusCircle className="h-4 w-4" />
-              </Button>
+              <div><CardTitle>Registro de Llamadas</CardTitle><CardDescription>Historial de conversaciones.</CardDescription></div>
+              <Button size="sm" onClick={() => setIsCallLogFormOpen(true)}><PlusCircle className="h-4 w-4" /></Button>
             </CardHeader>
             <CardContent>
               {isLoadingCallLogs ? <Skeleton className="h-24 w-full" /> : (
                 callLogs && callLogs.length > 0 ? (
-                  <div className="space-y-4 max-h-64 overflow-y-auto">
-                    {callLogs.map(log => (
+                  <div className="space-y-4 max-h-64 overflow-y-auto">{callLogs.map(log => (
                       <div key={log.id} className="text-sm">
                         <p className="font-medium">{format(new Date(log.created_at), "PPP p", { locale: es })}</p>
                         <p className="text-muted-foreground whitespace-pre-wrap">{log.notes}</p>
                       </div>
-                    ))}
-                  </div>
+                    ))}</div>
                 ) : <p className="text-sm text-muted-foreground text-center py-4">No hay registros de llamadas.</p>
               )}
             </CardContent>
           </Card>
         </div>
-
         <div className="md:col-span-2">
           <Card>
-            <CardHeader>
-              <CardTitle>Historial de Servicios</CardTitle>
-              <CardDescription>Todas las órdenes de servicio asociadas a este cliente.</CardDescription>
-            </CardHeader>
+            <CardHeader><CardTitle>Historial de Servicios</CardTitle><CardDescription>Todas las órdenes de servicio asociadas a este cliente.</CardDescription></CardHeader>
             <CardContent>
-              {isLoadingOrders ? <Skeleton className="h-48 w-full" /> : isErrorOrders ? (
-                <div className="text-red-500">Error al cargar el historial.</div>
-              ) : serviceOrders && serviceOrders.length > 0 ? (
-                <ServiceOrdersTable serviceOrders={serviceOrders} onEdit={handleEditServiceClick} onDelete={handleDeleteServiceClick} onMarkComplete={handleMarkCompleteClick} />
-              ) : (
-                <div className="text-center text-muted-foreground py-8">No hay órdenes de servicio.</div>
-              )}
+              {isLoadingOrders ? <Skeleton className="h-48 w-full" /> : isErrorOrders ? <div className="text-red-500">Error al cargar el historial.</div>
+               : serviceOrders && serviceOrders.length > 0 ? <ServiceOrdersTable serviceOrders={serviceOrders} userProfile={userProfile} onEdit={handleEditServiceClick} onDelete={handleDeleteServiceClick} onMarkComplete={handleMarkCompleteClick} />
+               : <div className="text-center text-muted-foreground py-8">No hay órdenes de servicio.</div>}
             </CardContent>
           </Card>
         </div>
       </div>
-
-      {allCustomers && (
-        <SmartServiceOrderForm isOpen={isNewOrderFormOpen} onOpenChange={setIsNewOrderFormOpen} onSuccess={handleServiceSuccess} customers={allCustomers} preselectedCustomerId={customer.id} />
-      )}
-      {selectedOrder && (
-        <EditServiceOrderForm isOpen={isEditOrderFormOpen} onOpenChange={setIsEditOrderFormOpen} onSuccess={handleServiceSuccess} serviceOrder={selectedOrder} />
-      )}
-      {selectedOrder && (
-        <CompleteOrderDialog isOpen={isCompleteDialogOpen} onOpenChange={setIsCompleteDialogOpen} onConfirm={handleConfirmComplete} serviceOrder={selectedOrder} />
-      )}
+      {allCustomers && <SmartServiceOrderForm isOpen={isNewOrderFormOpen} onOpenChange={setIsNewOrderFormOpen} onSuccess={handleServiceSuccess} customers={allCustomers} preselectedCustomerId={customer.id} />}
+      {selectedOrder && <EditServiceOrderForm isOpen={isEditOrderFormOpen} onOpenChange={setIsEditOrderFormOpen} onSuccess={handleServiceSuccess} serviceOrder={selectedOrder} />}
+      {selectedOrder && <CompleteOrderDialog isOpen={isCompleteDialogOpen} onOpenChange={setIsCompleteDialogOpen} onConfirm={handleConfirmComplete} serviceOrder={selectedOrder} />}
       <CallLogForm isOpen={isCallLogFormOpen} onOpenChange={setIsCallLogFormOpen} onSuccess={handleCallLogSuccess} customerId={customer.id} />
     </Layout>
   );
 };
-
 export default CustomerDetail;
